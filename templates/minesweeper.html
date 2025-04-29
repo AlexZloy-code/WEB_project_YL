@@ -10,18 +10,22 @@
         <h2 id="message"> {{ Message }} </h2>
         <p id="debug"></p>
         <div id = 'buttons'>         <!-- Генерация разных кнопок -->
-            {% if start == True %}               <!-- Генерация кнопок выбора сложности  -->
+            {% if start == True %}   <!-- Генерация кнопок выбора сложности  -->
                 <a class="choose_btn btn btn-secondary" id="diffEasy" href="javascript:start_game('diffEasy', '/minesweeper/start');">Лёгкий</a>
                 <a class="choose_btn btn btn-secondary" id="diffMed" href="javascript:start_game('diffMed', '/minesweeper/start');">Средний</a>
                 <a class="choose_btn btn btn-secondary" id="diffHard" href="javascript:start_game('diffHard', '/minesweeper/start');">Сложный</a>
             {% else %}                  <!-- Генерация кнопок выбора действия  -->
-                <a class="choose_btn btn btn-secondary" id="open" href="javascript:iteract_cell('open', '/minesweeper/iteract', 'open');">Открыть</a>
-                <a class="choose_btn btn btn-secondary" id="flag" href="javascript:iteract_cell('flag', '/minesweeper/iteract', 'flag');">Поставить флаг</a>
+                <a class="choose_btn btn btn-secondary" id="open" href="javascript:interact_cell('open', '/minesweeper/interact', 'open');">Открыть</a>
+                <a class="choose_btn btn btn-secondary" id="flag" href="javascript:interact_cell('flag', '/minesweeper/interact', 'flag');">Поставить флаг</a>
             {% endif %}
+        </div>
+        <div id="retryButtons" class="hidden">
+            <a class="choose_btn btn btn-secondary" id="retry" href="minesweeper">Попробовать еще</a>
+            <a class="choose_btn btn btn-secondary" id="home" href="index">Вернуться</a>
         </div>
         </div>
     </div>
-        <!-- Скрипты в AJAX запросов для динамичной смены состояния поля и сайта -->
+        <!-- Скрипты AJAX запросов для динамичной смены состояния поля и сайта -->
         {% block scripts %}
             <script>
                 async function start_game(sourceElem, diff) {
@@ -55,32 +59,45 @@
                     if (data.cell_type == 'flaged') {
                         document.getElementById('buttons').classList.remove('hidden');
                         document.getElementById('flag').innerText = 'Убрать флаг';
-                        document.getElementById('message').innerText = 'Can iteract';
                     }
                     else if (data.cell_type != 'opened') {
                         document.getElementById('flag').innerText = 'Поставить флаг';
                         document.getElementById('buttons').classList.remove('hidden');
-                        document.getElementById('message').innerText = 'Can iteract';
                     }
                     else {
                         document.getElementById('buttons').classList.add('hidden');
-                        document.getElementById('message').innerText = 'Cant iteract';
                     }
                 }
                 // Функция для динамического открытия клетки, передает на сервер id клетки которую пытались открыть, получая обновленное поле
-                async function iteract_cell(sourceElem, using, type) {
+                async function interact_cell(sourceElem, using, type) {
                     const response = await fetch(using, {
                         method: 'POST',
                         headers: {'Content-Type': 'application/json; charset=utf-8'},
                         body: JSON.stringify({
-                            iteract_type: type
+                            interact_type: type
                         })
                     })
+
+                    
                     const data = await response.json();
-                    document.querySelectorAll('.selected').forEach(el => el.classList.remove('selected'));
-                    document.getElementById('field').innerHTML = data.upd_field;
-                    document.getElementById('buttons').classList.add('hidden');
-                    document.getElementById('message').innerText = data.message;
+
+                    // Временная заглушка, планируется добавление обработки записи рекорда на аккаунт, пока только выход
+                    if (data.message.startsWith('Вы ')) {
+                        document.getElementById('field').innerHTML = data.upd_field;
+                        document.getElementById('buttons').classList.add('hidden');
+                        document.querySelectorAll('a.field_block').forEach(link => {
+                            link.removeAttribute('href');
+                        });
+                        document.getElementById('retryButtons').classList.remove('hidden')
+                        document.getElementById('message').innerText = data.message;
+                    }
+
+                    else {
+                        document.querySelectorAll('.selected').forEach(el => el.classList.remove('selected'));
+                        document.getElementById('field').innerHTML = data.upd_field;
+                        document.getElementById('buttons').classList.add('hidden');
+                        document.getElementById('message').innerText = data.message;
+                    }
                 }
             </script>
         {% endblock %}

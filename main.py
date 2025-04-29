@@ -1,6 +1,6 @@
 import datetime
-from saper_web import Minesweeper, DiffButton
-from flask import Flask, render_template, redirect, request, jsonify, render_template_string, session
+from saper_web import Minesweeper
+from flask import Flask, render_template, redirect, request, jsonify, make_response, session
 from data import db_session
 from data.users import User
 from forms.user import LoginForm, RegisterForm
@@ -11,7 +11,7 @@ app = Flask(__name__)
 app.config['PERMANENT_SESSION_LIFETIME'] = datetime.timedelta(
     days=365
 )
-app.config['SECRET_KEY'] = 'а че писать сюда'
+app.config['SECRET_KEY'] = 'DONT_KNOW_WHAT_TO_WRITE_HERE'
 app.config["SESSION_TYPE"] = "filesystem"
 Session(app)
 login_manager = LoginManager()
@@ -42,7 +42,7 @@ def start_game():
     if "minesweeper" not in session:
         session["minesweeper"] = Minesweeper(data['field'])  # Создаём игру один раз для сессии
     game = session["minesweeper"]
-    return jsonify({'field': render_template('minesweeper.html', field=game.matrix, title='Сапер')})
+    return jsonify({'field': render_template('minesweeper.html', field=game.transformed_matrix, title='Сапер')})
 
 
 @app.route('/minesweeper/select-cell', methods=['POST'])
@@ -53,27 +53,23 @@ def select_cell():
     game.selected_cell_id = cell_id
     print(cell_id)
     return jsonify({'id_cell': str(cell_id),
-                    'cell_type': game.matrix[y][x].type})
+                    'cell_type': game.transformed_matrix[y][x].type})
 
 
-@app.route('/minesweeper/iteract', methods=['POST'])
-def iteract_cell():
+@app.route('/minesweeper/interact', methods=['POST'])
+def interact_cell():
     game = session['minesweeper']
-    x, y = game.selected_cell_id
+    y, x = game.selected_cell_id
     data = request.get_json()
+    msg = game.interactive(data['interact_type'], [x, y])
+    if msg:
+        print(msg)
+        return jsonify({'message': msg,
+                        'upd_field': render_template('mineField.html', field=game.transformed_matrix)})
     
-    if data['iteract_type'] == 'flag':
-        game.matrix[y][x].value = '⚐'
-        if game.matrix[y][x].type == 'flaged':
-            game.matrix[y][x].type = 'closed'
-            game.matrix[y][x].value = ''
-        else:
-            game.matrix[y][x].type = 'flaged'
-    else:
-        game.matrix[y][x].type = 'opened'
-    print(f'Try to {data['iteract_type']} cell {game.selected_cell_id}')
-    return jsonify({'message': f'Try to {data['iteract_type']} cell {game.selected_cell_id}',
-                    'upd_field': render_template('mineField.html', field=game.matrix)})
+    print(f'Try to {data['interact_type']} cell {game.selected_cell_id}')
+    return jsonify({'message': f'Try to {data['interact_type']} cell {game.selected_cell_id}',
+                    'upd_field': render_template('mineField.html', field=game.transformed_matrix)})
 
 
 # Дальше всякая муть с логинами и регистрациями
@@ -114,11 +110,8 @@ def reqister():
         user = User(
             surname=form.surname.data,
             age=int(form.age.data),
-            position=form.position.data,
-            speciality=form.speciality.data,
             name=form.name.data,
             email=form.email.data,
-            address=form.address.data
         )
 
         user.set_password(form.password.data)
@@ -134,6 +127,12 @@ def reqister():
 def logout():
     logout_user()
     return redirect("/")
+
+
+@app.errorhandler(500)
+def not_date(error):
+    return make_response(jsonify({'Ошибка': 'Возможно при регистрации вы использовали не \
+                                  латинские буквы, недоработка скоро будет исправлена'}))
 
 
 if __name__ == '__main__':

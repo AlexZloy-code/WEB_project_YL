@@ -1,4 +1,6 @@
-import saper_console as sc
+
+import random
+from copy import deepcopy
 from flask import Flask, render_template, redirect
 
 
@@ -15,7 +17,8 @@ class DiffButton():
         self.type = type
 
 
-def transform_matrix(matrix):
+def transform_matrix(in_matrix):
+    matrix = deepcopy(in_matrix)
     translator = {'■': ('closed', ''), '@': ('mine', ''), ' ': ('opened', ''), '⚐': ('flaged', '⚐')}
     for y in range(len(matrix)):
         for x in range(len(matrix[y])):
@@ -33,72 +36,109 @@ class Minesweeper():
         self.create_matrix(difficulty)
         self.mas_of_mins = []
         self.selected_cell_id = []
+        self.count_close = 1
 
     def create_matrix(self, difficulty):
         if difficulty == 'diffEasy':
-            self.width, self.height, self.count_close, self.count_close, self.count_mins = sc.Easy()
+            self.width, self.height, self.count_close, self.count_close, self.count_mins = Easy()
         elif difficulty == 'diffMed':
-            self.width, self.height, self.count_close, self.count_close, self.count_mins = sc.Medium()
+            self.width, self.height, self.count_close, self.count_close, self.count_mins = Medium()
         elif difficulty == 'diffHard':
-            self.width, self.height, self.count_close, self.count_close, self.count_mins = sc.Hard()
-        self.matrix = transform_matrix([['■' for _ in range(self.width)] for _ in range(self.height)])
+            self.width, self.height, self.count_close, self.count_close, self.count_mins = Hard()
+        self.matrix = [['■' for _ in range(self.width)] for _ in range(self.height)]
+        self.transformed_matrix = transform_matrix(self.matrix)
 
-    def gameplay(self):
-        while True:
-            if self.count_close == self.count_mins:  # Обработка победы, если количество не раскрытых клеточек равно колличеству мин
-                self.matrix = transform_matrix(sc.show_min_on_matrix())
-                print('Вы выиграли')
-                return 'Victory'
-            self.matrix = transform_matrix(sc.show_matrix())
+    def interactive(self, move, cords):
+        if move == 'open':
+            var = 1
+        elif move == 'flag':
+            var = 2
+        if not self.mas_of_mins:
+            self.mas_of_mins = self.random_place_of_mins(*cords)
+        if var == 1:
+            
+            if (cords[0], cords[1]) in self.mas_of_mins:  # Обработка поражения, если координаты пользователя равны
+                                                            # координатам из списка мин
+                self.show_min_on_matrix()
+                return 'Вы проиграли!'
+            self.check_act(*cords)  # Вызов функции обработки действия
+        elif var == 2:
+            if self.matrix[cords[0]][cords[1]] == '⚐':
+                self.matrix[cords[0]][cords[1]] = '■'
+                self.count_close -= 1
+            else:
+                self.matrix[cords[0]][cords[1]] = '⚐'
+                self.count_close += 1
+            if self.mas_of_mins and self.is_victory():  # Обработка победы, если все клетки закрыты
+                self.show_min_on_matrix()
+                return 'Вы выиграли!'
+        self.transformed_matrix = transform_matrix(self.matrix)
+        return
 
-            while True:  # Максимальная проверка на корректность введения координат
-                cords = input('Введите координаты ячейки начиная с единицы через пробел (ряд колонка): ').split()
-                if len(cords) != 2:
-                    print("Данные введены некорректно, введено не 2 числа, либо разделителем является не пробел!")
-                    continue
-                cords = cords
-                if not cords[0].isdigit():
-                    print("Данные введены некорректно, 1 значение не является числом")
-                    continue
-                elif not cords[1].isdigit():
-                    print("Данные введены некорректно, 2 значение не является числом")
-                    continue
-                cords = list(map(int, cords))
-                if not 0 < cords[0] <= sc.height:
-                    print("1 значение некорректно")
-                    continue
-                elif not 0 < cords[1] <= sc.width:
-                    print("2 значение некорректно")
-                    continue
-                if sc.matrix[cords[0] - 1][cords[1] - 1] == ' ' or sc.matrix[cords[0] - 1][cords[1] - 1] in range(1, 9):
-                    print('Клетка уже открыта')
-                    continue
-                break
-            cords = [i - 1 for i in cords]  # Переработка данных пользователя для работы с индексамии
-            print('Выберите действие из списка:', '1 - открыть клетку', '2 - пометить флажком',
-                '3 - пометить вопросом', sep='\n')
-            var = input()
-            while var not in '123':
-                print('Данные введены некорректно')
-                var = input()
-            if var == '1':
-                if sc.matrix[cords[0]][cords[1]] in ('?', u'\u2690'):
-                    print('Вы уверены что хотите открыть?', '1 - Да', '2 - Нет', sep='\n')
-                    var = input()
-                    while var not in '12':
-                        print('Данные введены некорректно')
-                        var = input()
-                    if var == '2':
-                        continue
-                if not self.mas_of_mins:  # Если список мин пуст (первый ход), то он будет создан
-                    self.mas_of_mins = sc.random_place_of_mins(*cords)
-                if (cords[0], cords[1]) in sc.mas_of_mins:  # Обработка поражения, если координаты пользователя равны
-                    # координатам из списка мин
-                    sc.show_min_on_matrix()
-                    print('Вы проиграли!')
-                    break
-                sc.check_act(*cords)  # Вызов функции обработки действия
-            elif var == '2':
-                sc.matrix[cords[0]][cords[1]] = u'\u2690'
-            elif var == '3':
-                sc.matrix[cords[0]][cords[1]] = '?'
+    def is_victory(self):       # Обработка победы, если координаты флажков соотвествуют кооржинатам мин
+        flag_coords = set()
+        for y in range(len(self.matrix)):
+            for x in range(len(self.matrix[y])):
+                if self.matrix[y][x] == '⚐':
+                    flag_coords.add((y, x))
+        if flag_coords == set(self.mas_of_mins):
+            return True
+
+    def random_place_of_mins(self, row, col):
+        # Рандомно создает кординаты мин на поле, после идет проверка не совпадают ли
+        # координаты мины и первой открытой клетки
+        mas_of_mins = []
+        while len(mas_of_mins) < self.count_mins:  # Цикл работает пока во множестве меньше элементов чем количество мин
+            row_min, col_min = random.randint(0, self.height - 1), random.randint(0, self.width - 1)
+            if (row_min, col_min) != (row, col):  # Проверка не координаты мины и=с координатами первой открытой клетки
+                mas_of_mins.append((row_min, col_min))
+        return mas_of_mins
+        #self.mas_of_mins = self.mas_of_mins  # Превращает множество в список, для моего удобства :)
+
+    def show_min_on_matrix(self):
+        for i in self.mas_of_mins:
+            self.matrix[i[0]][i[1]] = '@'
+        self.transformed_matrix = transform_matrix(self.matrix)
+
+    def check_act(self, row, col):
+        count_mins = self.check_min_around(row, col)  #Рекурсивная функция обрабатывающая каждое открытие клетки
+        if count_mins:  # Если значение не равно 0 то мы присваеваем это значение клетке
+            self.matrix[row][col] = count_mins
+        else:  # Иначе присваеваем пустоту и повторяем в соседних клетках
+            self.matrix[row][col] = ' '
+            for i in range(row - 1, row + 2):
+                for j in range(col - 1, col + 2):
+                    if 0 <= i < self.height and 0 <= j < self.width:  # Если координаты не находятся за пределами поля
+                        if self.matrix[i][j] == '■':  # И значение ячейки равно этому символу (для окончания рекурсии
+                            # и правильного подсчета закрытых клеток)
+                            self.check_act(i, j)  # То мы рекурсивно вызываем функцию с этими координатами
+                            self.count_close += 1
+
+    def check_min_around(self, row, col):
+    # С помощью счетчика count подсчитывает количество мин в 8 окружающих клетках'''
+        count = 0
+        for i in range(row - 1, row + 2):
+            for j in range(col - 1, col + 2):
+                if 0 <= i <= self.height - 1 and 0 <= j <= self.width - 1:
+                    if (i, j) in self.mas_of_mins:
+                        count += 1
+        return count
+
+
+
+def Easy():
+    #global width, height, count_close, count_mins     
+    width, height, count_close, count_mins = 5, 5, 25, 7
+    return width, height, count_close, count_close, count_mins
+
+    
+def Medium():
+    #global width, height, count_close, count_mins
+    width, height, count_close, count_mins = 8, 8, 64, 10
+    return width, height, count_close, count_close, count_mins
+
+
+def Hard():
+    #global width, height, count_close, count_mins
+    width, height, count_close, count_mins = 16, 16, 256, 40
+    return width, height, count_close, count_close, count_mins
