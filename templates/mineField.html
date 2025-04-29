@@ -1,0 +1,18 @@
+{% for columns in field %}
+{% set row_index = loop.index0 %}
+    <div class = 'row'>                     <!-- Генерация поля -->
+        {% for cell in columns %}
+            {% if cell.type == 'opened' %}
+                <a id="cell-{{ loop.index0 }}-{{ row_index }}" class='field_block opened col' href="javascript:select_cell('cell-{{ loop.index0 }}-{{ row_index }}');">{{ cell.value }}</a>
+            {% elif cell.type == 'flaged' %}
+                <a id="cell-{{ loop.index0 }}-{{ row_index }}" class='field_block flaged col' href="javascript:select_cell('cell-{{ loop.index0 }}-{{ row_index }}');">{{ cell.value }}</a>
+            {% elif cell.type == 'closed' %}
+                <a id="cell-{{ loop.index0 }}-{{ row_index }}" class='field_block closed col' href="javascript:select_cell('cell-{{ loop.index0 }}-{{ row_index }}');"></a>
+            {% elif cell.type == 'mine' %}
+                <a id="cell-{{ loop.index0 }}-{{ row_index }}" class='field_block mine col'></a>
+            {% else %}
+                <a id="cell-{{ loop.index0 }}-{{ row_index }}" class='field_block col'>unknown</a>
+            {% endif %}
+        {% endfor %}
+    </div>
+{% endfor %}
