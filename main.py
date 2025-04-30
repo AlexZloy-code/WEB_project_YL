@@ -26,7 +26,7 @@ def main():
 @app.route("/index")
 def index():
     db_sess = db_session.create_session()
-    return render_template("base.html", title='Главная')
+    return render_template("index.html", title='Главная')
 
 # Обработка игры
 @app.route('/minesweeper')
@@ -68,7 +68,7 @@ def interact_cell():
                         'upd_field': render_template('mineField.html', field=game.transformed_matrix)})
     
     print(f'Try to {data['interact_type']} cell {game.selected_cell_id}')
-    return jsonify({'message': f'Try to {data['interact_type']} cell {game.selected_cell_id}',
+    return jsonify({'message': '',
                     'upd_field': render_template('mineField.html', field=game.transformed_matrix)})
 
 

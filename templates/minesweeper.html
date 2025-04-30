@@ -8,7 +8,7 @@
         </div>
         <!-- Сообщение игроку -->
         <h2 id="message"> {{ Message }} </h2>
-        <p id="debug"></p>
+        <p id="debug" class="hidden"></p>
         <div id = 'buttons'>         <!-- Генерация разных кнопок -->
             {% if start == True %}   <!-- Генерация кнопок выбора сложности  -->
                 <a class="choose_btn btn btn-secondary" id="diffEasy" href="javascript:start_game('diffEasy', '/minesweeper/start');">Лёгкий</a>
