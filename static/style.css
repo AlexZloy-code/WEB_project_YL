@@ -1,0 +1,47 @@
+.game-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    flex-direction: column;
+}
+.hidden {
+    display: none;
+}
+.field {
+    max-width: 90%;
+}
+.field_block {
+    display: flex;
+    width: 45px;
+    max-width: 45px;
+    height: 45px;
+    max-height: 45px;
+    margin: 0px;
+    border: 1px solid #000000;
+    box-shadow: inset 0px 0px 3px rgba(0,0,0,0.9);
+    text-align: center;
+    justify-content: center;
+    align-items: center;
+    font-family: 'Roboto';
+    font-weight: bold;
+    font-size: 24px;
+}
+.field a {
+    text-decoration: none;  /* Убирает подчёркивание */
+    color: inherit;         /* Делает цвет как у обычного текста */
+}
+.field .closed {
+    background-color: #919191;
+}
+.field .mine {
+    background-color: #cccccc;
+    background-image: url('./img/mine.png');
+    background-size: cover;
+}
+.field .opened {
+    box-shadow: none;
+    background-color: #cccccc;
+}
+.field .selected {
+    background-color: #d4d4d4;
+}
