@@ -1,11 +1,14 @@
 import datetime
-from saper_web import Minesweeper
+
 from flask import Flask, render_template, redirect, request, jsonify, make_response, session
 from data import db_session
 from data.users import User
 from forms.user import LoginForm, RegisterForm
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from flask_session import Session
+
+from saper_web import Minesweeper
+from bullsCows import BullsCows
 
 app = Flask(__name__)
 app.config['PERMANENT_SESSION_LIFETIME'] = datetime.timedelta(
@@ -28,20 +31,22 @@ def index():
     db_sess = db_session.create_session()
     return render_template("index.html", title='Главная')
 
-# Обработка игры
+#          САПЕР
 @app.route('/minesweeper')
 def minesweeper():
-    
+    if "minesweeper" in session:
+        game = session["minesweeper"]
+        return render_template('minesweeper.html', field=game.transformed_matrix, title='Сапер')
     return render_template('minesweeper.html', start=True, field=[], title='Сапер')
 
 @app.route('/minesweeper/start', methods=['POST'])
 def start_game():
     data = request.get_json()
-    # временная утановка: при перезагрузке вся игра слетает:
-    session.pop('minesweeper', None)
+
     if "minesweeper" not in session:
         session["minesweeper"] = Minesweeper(data['field'])  # Создаём игру один раз для сессии
     game = session["minesweeper"]
+
     return jsonify({'field': render_template('minesweeper.html', field=game.transformed_matrix, title='Сапер')})
 
 
@@ -62,14 +67,49 @@ def interact_cell():
     y, x = game.selected_cell_id
     data = request.get_json()
     msg = game.interactive(data['interact_type'], [x, y])
+    field = game.transformed_matrix
+
+    # При выигрыше/проигрыше очищаются данные сессии
     if msg:
         print(msg)
+        session.pop('minesweeper', None)
         return jsonify({'message': msg,
-                        'upd_field': render_template('mineField.html', field=game.transformed_matrix)})
+                        'upd_field': render_template('mineField.html', field=field)})
     
     print(f'Try to {data['interact_type']} cell {game.selected_cell_id}')
     return jsonify({'message': '',
-                    'upd_field': render_template('mineField.html', field=game.transformed_matrix)})
+                    'upd_field': render_template('mineField.html', field=field)})
+
+
+#   БЫКИ И КОРОВЫ
+@app.route('/bulls_and_cows')
+def bulls_and_cows():
+    if 'bulls_and_cows' not in session:
+        session['bulls_and_cows'] = BullsCows()
+    game = session['bulls_and_cows']
+
+    return render_template('bulls_and_cows.html', title='Быки и коровы',
+                           history=list(map(lambda x: x.replace('<br>', '\n'), game.history)))
+
+@app.route('/bulls_and_cows/make_guess', methods=['POST'])
+def make_guess():
+    game = session['bulls_and_cows']
+    data = request.get_json()
+    guess = game.make_guess(data['number'])
+    if guess['status'] == 'win':
+        session.pop('bulls_and_cows', None)
+    if guess['status'] == 'error':
+        return jsonify({'response': guess['message'], 'status': guess['status']})
+    return jsonify({'response': '<br>'.join(guess['message'][::-1]),
+                    'status': guess['status']})
+
+
+# Очистка сессии
+@app.route('/clear_game_session', methods=['POST'])
+def clear_game_session():
+    data = request.get_json()
+    session.pop(data['session'], None)
+    return 'success'
 
 
 # Дальше всякая муть с логинами и регистрациями

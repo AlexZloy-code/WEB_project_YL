@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Анимация НЛО с коровами и быками</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #0b0c1a;
+            font-family: Arial, sans-serif;
+            color: white;
+        }
+
+        #sky {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            background: linear-gradient(to bottom, #001a33, #000000);
+            overflow: hidden;
+        }
+
+        #cow-pen,
+        #bull-pen {
+            position: absolute;
+            bottom: 50px;
+            width: 150px;
+            height: 150px;
+            border: 2px solid #555;
+            background: #224422;
+            border-radius: 10px;
+        }
+
+        #cow-pen {
+            right: 50px;
+        }
+
+        #bull-pen {
+            left: 50px;
+        }
+
+        #cow-pen h3,
+        #bull-pen h3 {
+            margin: 5px;
+            font-size: 18px;
+            text-align: center;
+        }
+
+        .cow,
+        .bull {
+            width: 40px;
+            height: 40px;
+            position: absolute;
+            bottom: 10px;
+            background-size: contain;
+            background-repeat: no-repeat;
+        }
+
+        .cow {
+            background-image: url('https://cdn-icons-png.flaticon.com/512/616/616408.png');
+        }
+
+        .bull {
+            background-image: url('https://cdn-icons-png.flaticon.com/512/616/616405.png');
+        }
+
+        #ufo {
+            position: absolute;
+            width: 100px;
+            height: 60px;
+            background-image: url('https://cdn-icons-png.flaticon.com/512/616/616408.png');
+            background: radial-gradient(circle at center, #a0f0ff 40%, #004466 100%);
+            border-radius: 50% / 60%;
+            box-shadow: 0 0 15px 5px #a0f0ff;
+            margin-left: auto;
+            margin-right: auto;
+            z-index: 1000;
+        }
+
+        #beam {
+            position: absolute;
+            width: 80px;
+            height: 120px;
+            background: rgba(160, 240, 255, 0.3);
+            top: 60px;
+            left: 50%;
+            margin-left: -40px;
+            clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+            opacity: 0;
+            transition: opacity 0.3s;
+            z-index: 900;
+        }
+
+        /* Анимация движения */
+        .move {
+            transition: top 2s ease, left 2s ease;
+        }
+
+        .input_pole {
+            width: 50px;
+            margin-top: 20%;
+            margin-inline: 45%;
+            display: flex;
+        }
+
+        .num_1,
+        .num_2,
+        .num_3,
+        .num_4 {
+            width: 40px;
+            height: 80px;
+            font-size: 60px;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="sky">
+        <div class="input_pole">
+            <input class="num_1">
+            <input class="num_2">
+            <input class="num_3">
+            <input class="num_4">
+        </div>
+        <div id="cow-pen">
+            <h3>Корова</h3>
+        </div>
+        <div id="bull-pen">
+            <h3>Бык</h3>
+        </div>
+        <div id="ufo"></div>
+        <div id="beam"></div>
+    </div>
+
+    <script>
+        // Создаём корову или быка DOM элемент
+        function createAnimal(type, id) {
+            const el = document.createElement('div');
+            el.classList.add(type);
+            el.style.bottom = '10px';
+            el.style.left = (10 + id * 45) + 'px'; // Расположение в загоне
+            return el;
+        }
+
+        // Добавляем животных в загоны
+        function populatePens(cowsCount, bullsCount) {
+            const cowPen = document.getElementById('cow-pen');
+            const bullPen = document.getElementById('bull-pen');
+            cowPen.innerHTML = '<h3>Корова</h3>';
+            bullPen.innerHTML = '<h3>Бык</h3>';
+            
+
+            for (let i = 0; i < cowsCount; i++) {
+                const cow = createAnimal('cow', i);
+                cowPen.appendChild(cow);
+            }
+            for (let i = 0; i < bullsCount; i++) {
+                const bull = createAnimal('bull', i);
+                bullPen.appendChild(bull);
+            }
+        }
+
+        // Анимация НЛО
+        async function animateUFO(cowsCount, bullsCount) {
+            const ufo = document.getElementById('ufo');
+            const beam = document.getElementById('beam');
+            const cowPen = document.getElementById('cow-pen');
+            const bullPen = document.getElementById('bull-pen');
+
+            // Функция для плавного перехода
+            function moveTo(x, y, duration = 2000) {
+                return new Promise(resolve => {
+                    ufo.style.transition = `top ${duration}ms ease, left ${duration}ms ease`;
+                    ufo.style.top = y + 'px';
+                    ufo.style.left = x + 'px';
+                    beam.style.transition = `top ${duration}ms ease, left ${duration}ms ease`;
+                    beam.style.top = y + 'px';
+                    beam.style.left = x + 'px';
+                    setTimeout(resolve, duration);
+                });
+            }
+
+            // Получить координаты центра элемента относительно окна
+            function getCenter(el) {
+                const rect = el.getBoundingClientRect();
+                return {
+                    x: rect.left + rect.width / 2,
+                    y: rect.top + rect.height / 2
+                };
+            }
+
+            // Спустить животное из НЛО в загон
+            async function dropAnimal(type) {
+                beam.style.opacity = '1';
+
+                // Создаём животное в НЛО
+                const animal = createAnimal(type, 0);
+                animal.style.position = 'absolute';
+                animal.style.top = '60px';
+                animal.style.left = '50%';
+                animal.style.marginLeft = '-20px';
+                animal.style.transition = 'top 1500ms ease';
+                ufo.appendChild(animal);
+
+                // Анимация спуска животного вниз (лучом)
+                await new Promise(res => setTimeout(res, 100)); // небольшой таймаут
+                animal.style.top = '100px';
+
+                // Животное становится дочерним загону
+                await new Promise(res => setTimeout(res, 1600));
+                beam.style.opacity = '0';
+                ufo.removeChild(animal);
+
+                if (type === 'cow') {
+                    const cowPen = document.getElementById('cow-pen');
+                    const count = cowPen.querySelectorAll('.cow').length;
+                    const newCow = createAnimal('cow', count);
+                    cowPen.appendChild(newCow);
+                }
+                if (type === 'bull') {
+                    const bullPen = document.getElementById('bull-pen');
+                    const count = bullPen.querySelectorAll('.bull').length;
+                    const newBull = createAnimal('bull', count);
+                    bullPen.appendChild(newBull);
+                }
+            }
+
+            // Забрать животное из загона в НЛО
+            async function pickAnimal(type) {
+                beam.style.opacity = '1';
+
+                let pen, animals;
+                if (type === 'cow') {
+                    pen = document.getElementById('cow-pen');
+                    animals = pen.querySelectorAll('.cow');
+                } else {
+                    pen = document.getElementById('bull-pen');
+                    animals = pen.querySelectorAll('.bull');
+                }
+                if (animals.length === 0) {
+                    beam.style.opacity = '0';
+                    return; // Нет животных для забора
+                }
+                
+
+                // Берём последнего животного
+                const animal = animals[animals.length - 1];
+                // Создаём анимированное животное в НЛО
+                const animAnimal = createAnimal(type, 0);
+                animAnimal.style.position = 'absolute';
+                animAnimal.style.top = '140px';
+                animAnimal.style.left = '50%';
+                animAnimal.style.marginLeft = '-20px';
+                animAnimal.style.transition = 'top 1500ms ease';
+                ufo.appendChild(animAnimal);
+
+                // Удаляем животное из загона
+                pen.removeChild(animal);
+
+                // Анимация подъёма животного
+                await new Promise(res => setTimeout(res, 100));
+                animAnimal.style.top = '60px';
+
+                await new Promise(res => setTimeout(res, 1600));
+                beam.style.opacity = '0';
+                ufo.removeChild(animAnimal);
+            }
+
+            // Получаем координаты загонов для движения НЛО
+            function getPenCoords(pen) {
+                const rect = pen.getBoundingClientRect();
+                return {
+                    x: rect.left + rect.width / 2 - 50, // -50 чтобы НЛО центрировался (ширина 100)
+                    y: rect.top - 70 // чуть выше загона
+                };
+            }
+
+            // Начинаем анимацию
+            // Поднимаемся из центра сверху вниз на 100px
+            await moveTo(window.innerWidth / 2 - 50, 100);
+
+
+            for (let i = 0; i < cowsCount; i++) {
+                // Летим к правому загону
+                const cowCoords = getPenCoords(cowPen);
+                await moveTo(cowCoords.x, cowCoords.y);
+
+                await dropAnimal('cow');
+            }
+
+
+            for (let i = 0; i < bullsCount; i++) {
+                // Летим к левому загону
+                const bullCoords = getPenCoords(bullPen);
+                await moveTo(bullCoords.x, bullCoords.y);
+
+                await dropAnimal('bull');
+            }
+
+            // Возвращаемся в центр и поднимаемся вверх
+            await moveTo(window.innerWidth / 2 - 50, 100);
+            await moveTo(window.innerWidth / 2 - 50, -80);
+        }
+
+        // Инициализация
+        (function init() {
+            const params = { cows: 3, bulls: 4 };
+            // Изначально загон пустой (животных нет)
+            populatePens(0, 0);
+
+            // Запускаем анимацию с параметрами
+            animateUFO(params.cows, params.bulls);
+        })();
+    </script>
+</body>
+
+</html>

@@ -24,5 +24,19 @@
             {% endif %}
         </nav>
         <a href="index" class="btn btn-info">На главную</a>
+        
+        <script>
+            async function clearGameSession(sess) {
+                const response = await fetch('/clear_game_session', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json; charset=utf-8'},
+                        body: JSON.stringify({
+                            session: sess
+                        })
+                    })
+                location.reload();
+            }
+        </script>
     </body>
+    
 </html>

@@ -19,8 +19,8 @@
                 <a class="choose_btn btn btn-secondary" id="flag" href="javascript:interact_cell('flag', '/minesweeper/interact', 'flag');">Поставить флаг</a>
             {% endif %}
         </div>
-        <div id="retryButtons" class="hidden">
-            <a class="choose_btn btn btn-secondary" id="retry" href="minesweeper">Попробовать еще</a>
+        <div id="retryButtons">
+            <a class="choose_btn btn btn-secondary" id="retry" href="javascript:clearGameSession('minesweeper')">Попробовать еще</a>
             <a class="choose_btn btn btn-secondary" id="home" href="index">Вернуться</a>
         </div>
         </div>
@@ -88,7 +88,6 @@
                         document.querySelectorAll('a.field_block').forEach(link => {
                             link.removeAttribute('href');
                         });
-                        document.getElementById('retryButtons').classList.remove('hidden')
                         document.getElementById('message').innerText = data.message;
                     }
 

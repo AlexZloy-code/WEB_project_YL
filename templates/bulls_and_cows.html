@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+    {% block content %}
+        <div class="game-container">
+            <h1>Быки и коровы</h1>
+            <input id="number">
+            <a class="choose_btn btn btn-secondary" href="javascript:make_guess();"> Угадать</a>
+            <div id="response" style="width: 30%; height: 400px; overflow:auto; border:1px solid #ccc;"> {% for i in history %} {{i[:13]}}<br>{{i[13:]}} <br> {% endfor %}</div>
+            <h3 id="winHeader"></h3>
+            <div id="retryButtons">
+                <a class="choose_btn btn btn-secondary" id="retry" href="javascript:clearGameSession('bulls_and_cows')">Заново</a>
+                <a class="choose_btn btn btn-secondary" id="home" href="index">Вернуться</a>
+            </div>
+        </div>
+
+        {% block scripts %}
+            <script>
+                async function make_guess() {
+                    const response = await fetch('/bulls_and_cows/make_guess', {
+                            method: 'POST',
+                            headers: {'Content-Type': 'application/json; charset=utf-8'},
+                            body: JSON.stringify({
+                                number: document.getElementById('number').value
+                            })
+                        })
+                    const data = await response.json();
+                    if (data['status'] == 'win') {
+                        document.getElementById('winHeader').innerHTML ='<h3>Вы выиграли!</h3>'
+                    }
+                    else {
+                        document.getElementById('response').innerHTML = data['response']
+                    }
+                }
+
+            </script>
+    {% endblock %}
+{% endblock %}
