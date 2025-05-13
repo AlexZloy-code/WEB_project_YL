@@ -45,3 +45,6 @@
 .field .selected {
     background-color: #d4d4d4;
 }
+#retryButtons {
+    margin: 20px;
+}

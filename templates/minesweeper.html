@@ -8,7 +8,7 @@
         </div>
         <!-- Сообщение игроку -->
         <h2 id="message"> {{ Message }} </h2>
-        <p id="debug"></p>
+        <p id="debug" class="hidden"></p>
         <div id = 'buttons'>         <!-- Генерация разных кнопок -->
             {% if start == True %}   <!-- Генерация кнопок выбора сложности  -->
                 <a class="choose_btn btn btn-secondary" id="diffEasy" href="javascript:start_game('diffEasy', '/minesweeper/start');">Лёгкий</a>
@@ -19,10 +19,12 @@
                 <a class="choose_btn btn btn-secondary" id="flag" href="javascript:interact_cell('flag', '/minesweeper/interact', 'flag');">Поставить флаг</a>
             {% endif %}
         </div>
-        <div id="retryButtons" class="hidden">
-            <a class="choose_btn btn btn-secondary" id="retry" href="minesweeper">Попробовать еще</a>
+        {% if not start %}
+        <div id="retryButtons">
+            <a class="choose_btn btn btn-secondary" id="retry" href="javascript:clearGameSession('minesweeper')">Попробовать еще</a>
             <a class="choose_btn btn btn-secondary" id="home" href="index">Вернуться</a>
         </div>
+        {% endif %}
         </div>
     </div>
         <!-- Скрипты AJAX запросов для динамичной смены состояния поля и сайта -->
@@ -88,7 +90,6 @@
                         document.querySelectorAll('a.field_block').forEach(link => {
                             link.removeAttribute('href');
                         });
-                        document.getElementById('retryButtons').classList.remove('hidden')
                         document.getElementById('message').innerText = data.message;
                     }
 

@@ -1,7 +1,7 @@
 import datetime
 import random as r
 from saper_web import Minesweeper
-from flask import Flask, render_template, redirect, request, jsonify, make_response, session
+from flask import Flask, render_template, redirect, request, jsonify, make_response, session, url_for
 from data import db_session
 from data.users import User
 from forms.user import LoginForm, RegisterForm
@@ -30,93 +30,118 @@ def main():
 @app.route("/index")
 def index():
     db_sess = db_session.create_session()
-    return render_template("base.html", title='Главная')
+    return render_template("index.html", title='Главная')
+
 
 # Обработка игры
-
-
-@app.route('/bulls_and_cows', methods=['POST', 'GET'])
-def bulls_and_cows():
-    difficulty = 'Easy'
-    digits = 5
-
-    if "b_a_c" not in session:
-        # Создаём игру один раз для сессии
-        session["b_a_c"] = {'attempts': [[]]}
-        proba = str(r.randint(10 ** (digits - 1), 10 ** digits) - 1)
-        while len(set(proba)) != len(proba):
-            proba = str(r.randint(10 ** (digits - 1), 10 ** digits) - 1)
-        session["b_a_c"]['num'] = proba
-
-    if request.method == 'GET':
-        return render_template('web.html', error='', history=session["b_a_c"], digits=digits)
-    elif request.method == 'POST':
-        num = ''.join([str(request.form[f'num_{i}']) for i in range(digits)])
-        if len(set(num)) != 4:
-            return render_template('web.html', error='Цифры должны быть разными', history=session["b_a_c"], digits=digits)
-        elif num[0] == 0:
-            return render_template('web.html', error='Первая цифра не может быть 0', history=session["b_a_c"], digits=digits)
+@app.route('/bulls_and_cows/make_guess', methods=['POST'])
+def make_guess():
+    data = request.get_json()
+    digits = session['b_a_c']['digits']
+    difficulty = session['b_a_c']['difficulty']
+    num = data['number']
+    #num = ''.join([str(data['number']) for i in range(digits)])
+    if difficulty == 'easy':
+        cows, bows = 0, 0
+        for i in range(digits):
+            if session["b_a_c"]['num'][i] == num[i]:
+                bows += 1
+            elif num[i] in session["b_a_c"]['num']:
+                cows += 1
+        if [num, cows, bows] in session["b_a_c"]['attempts']:
+            session["b_a_c"]['attempts'].remove([num, cows, bows])
+        session["b_a_c"]['attempts'].append([num, cows, bows])
+        if bows == digits:
+            print('win')
+            session.pop('b_a_c', None)
+            return jsonify({'html': '<h3>Вы выиграли!</h3>', 'status': 'win'})
+    else:
+        cows, bows = 0, 0
+        for i in range(digits):
+            if session["b_a_c"]['num'][i] == num[i]:
+                bows += 1
+            elif num[i] in session["b_a_c"]['num']:
+                cows += 1
+        if [num, cows, bows] in session["b_a_c"]['attempts']:
+            session["b_a_c"]['attempts'].remove([num, cows, bows])
+        session["b_a_c"]['attempts'].append([num, cows, bows])
+        if bows == digits:
+            print('win')
+            session.pop('b_a_c', None)
+            return jsonify({'html': '<h3>Вы выиграли!</h3>', 'status': 'win'})
+            
         else:
-            if difficulty == 'Easy':
-                cows, bows = 0, 0
-                for i in range(4):
-                    if session["b_a_c"]['num'][i] == num[i]:
-                        bows += 1
-                    elif num[i] in session["b_a_c"]['num']:
-                        cows += 1
-                session["b_a_c"]['attempts'].append([num, cows, bows])
-                if bows == 4:
-                    return 'Победа'
-            else:
-                cows, bows = 0, 0
-                for i in range(4):
-                    if session["b_a_c"]['num'][i] == num[i]:
-                        bows += 1
-                    elif num[i] in session["b_a_c"]['num']:
-                        cows += 1
-                session["b_a_c"]['attempts'].append([num, cows, bows])
-                if bows == 4:
-                    return 'Победа'
-                else:
-                    while True:
-                        proba = str(
-                            r.randint(10 ** (digits - 1), 10 ** digits) - 1)
-                        if proba in [i[0] for i in session["b_a_c"]['attempts']]:
-                            continue
-                        if len(set(proba)) != len(proba):
-                            continue
-                        flag = True
-                        for ans in session["b_a_c"]['attempts']:
-                            cows_nado, bows_nado = ans[1], ans[2]
-                            cows, bows = 0, 0
-                            for inx in range(4):
-                                if ans[0][inx] == proba[inx]:
-                                    bows += 1
-                                elif proba[inx] in ans[0]:
-                                    cows += 1
-                            if cows != cows_nado or bows != bows_nado:
-                                flag = False
-                        if flag:
-                            break
-                    session["b_a_c"]['num'] = proba
-        return render_template('web.html', error='', history=session["b_a_c"], digits=digits)
+            while True:
+                proba = str(r.randint(10 ** (digits - 1), 10 ** digits) - 1)
+                if proba in [i[0] for i in session["b_a_c"]['attempts']]:
+                    continue
+                if len(set(proba)) != len(proba):
+                    continue
+                flag = True
+                for ans in session["b_a_c"]['attempts']:
+                    cows_nado, bows_nado = ans[1], ans[2]
+                    cows, bows = 0, 0
+                    for inx in range(digits):
+                        if ans[0][inx] == proba[inx]:
+                            bows += 1
+                        elif proba[inx] in ans[0]:
+                            cows += 1
+                    if cows != cows_nado or bows != bows_nado:
+                        flag = False
+                if flag:
+                    break
+            session["b_a_c"]['num'] = proba
+        #a = {'html': ''.join(['<tr>' + ''.join([f'<td>{i}</td>' for i in j]) + '</tr>' for j in session['b_a_c']['attempts'][::-1]]), 'status': 'guess'}
+        return jsonify({'html': ''.join(['<tr>' + ''.join([f'<td>{i}</td>' for i in j]) + '</tr>'
+                                                  for j in session['b_a_c']['attempts'][::-1]]),
+                                                  'status': 'guess'})
 
 
+@app.route('/bulls_and_cows', methods=['GET', 'POST'])
+def bulls_and_cows():
+    if 'b_a_c' in session:
+        if request.method == 'GET':
+            return render_template('b_a_c_game.html',
+                                   history=session["b_a_c"]['attempts'],
+                                   digits=session['b_a_c']['digits'])
+        # Если пришел POST с уже существующей игрой - это ошибка
+        return redirect(url_for('bulls_and_cows'))
+
+    if request.method == 'POST':
+        digits = int(request.form.get('digits', 4))
+        difficulty = request.form.get('difficulty', 'easy')
+        proba = str(r.randint(10**(digits-1), 10**digits - 1))
+        
+        session["b_a_c"] = {
+            'num': proba,
+            'attempts': [],
+            'digits': digits,
+            'difficulty': difficulty,
+            'game_started': True
+        }
+        session.modified = True
+        # После POST делаем редирект на GET, чтобы избежать повторной отправки
+        return redirect(url_for('bulls_and_cows'))  # Редирект на тот же URL, но методом GET
+    
+    return render_template('b_a_c_menu.html')
+
+
+#          САПЕР
 @app.route('/minesweeper')
 def minesweeper():
-
+    if "minesweeper" in session:
+        game = session["minesweeper"]
+        return render_template('minesweeper.html', field=game.transformed_matrix, title='Сапер')
     return render_template('minesweeper.html', start=True, field=[], title='Сапер')
-
 
 @app.route('/minesweeper/start', methods=['POST'])
 def start_game():
     data = request.get_json()
-    # временная утановка: при перезагрузке вся игра слетает:
-    session.pop('minesweeper', None)
+
     if "minesweeper" not in session:
-        # Создаём игру один раз для сессии
-        session["minesweeper"] = Minesweeper(data['field'])
+        session["minesweeper"] = Minesweeper(data['field'])  # Создаём игру один раз для сессии
     game = session["minesweeper"]
+
     return jsonify({'field': render_template('minesweeper.html', field=game.transformed_matrix, title='Сапер')})
 
 
@@ -137,15 +162,25 @@ def interact_cell():
     y, x = game.selected_cell_id
     data = request.get_json()
     msg = game.interactive(data['interact_type'], [x, y])
+    field = game.transformed_matrix
+
+    # При выигрыше/проигрыше очищаются данные сессии
     if msg:
         print(msg)
+        session.pop('minesweeper', None)
         return jsonify({'message': msg,
-                        'upd_field': render_template('mineField.html', field=game.transformed_matrix)})
+                        'upd_field': render_template('mineField.html', field=field)})
+    
+    print(f'Try to {data['interact_type']} cell {game.selected_cell_id}')
+    return jsonify({'message': '',
+                    'upd_field': render_template('mineField.html', field=field)})
 
-    print(f'Try to {data["interact_type"]} cell {game.selected_cell_id}')
-    return jsonify({'message': f'Try to {data["interact_type"]} cell {game.selected_cell_id}',
-                    'upd_field': render_template('mineField.html', field=game.transformed_matrix)})
-
+# Очистка сессии
+@app.route('/clear_game_session', methods=['POST'])
+def clear_game_session():
+    data = request.get_json()
+    session.pop(data['session'], None)
+    return 'success'
 
 # Дальше всякая муть с логинами и регистрациями
 @login_manager.user_loader
