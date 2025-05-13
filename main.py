@@ -33,14 +33,13 @@ def index():
     return render_template("index.html", title='Главная')
 
 
-# Обработка игры
+#      БЫКИ И КОРОВЫ
 @app.route('/bulls_and_cows/make_guess', methods=['POST'])
 def make_guess():
     data = request.get_json()
     digits = session['b_a_c']['digits']
     difficulty = session['b_a_c']['difficulty']
     num = data['number']
-    #num = ''.join([str(data['number']) for i in range(digits)])
     if difficulty == 'easy':
         cows, bows = 0, 0
         for i in range(digits):
@@ -104,7 +103,7 @@ def bulls_and_cows():
             return render_template('b_a_c_game.html',
                                    history=session["b_a_c"]['attempts'],
                                    digits=session['b_a_c']['digits'])
-        # Если пришел POST с уже существующей игрой - это ошибка
+
         return redirect(url_for('bulls_and_cows'))
 
     if request.method == 'POST':
@@ -120,8 +119,8 @@ def bulls_and_cows():
             'game_started': True
         }
         session.modified = True
-        # После POST делаем редирект на GET, чтобы избежать повторной отправки
-        return redirect(url_for('bulls_and_cows'))  # Редирект на тот же URL, но методом GET
+
+        return redirect(url_for('bulls_and_cows'))
     
     return render_template('b_a_c_menu.html')
 
