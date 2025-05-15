@@ -1,20 +1,11 @@
-
 import random
 from copy import deepcopy
-from flask import Flask, render_template, redirect
 
 
 class Cell(): # Я подумал что лучше сделать каждую клетку классом, посмотрим, как потом можно развить идею
     def __init__(self, type, value='', image=None):
         self.type = type
         self.value = value
-
-
-class DiffButton():
-    def __init__(self, value, href, type, styles=None):
-        self.value = value
-        self.href = href
-        self.type = type
 
 
 def transform_matrix(in_matrix):

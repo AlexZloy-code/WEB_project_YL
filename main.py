@@ -1,12 +1,16 @@
 import datetime
 import random as r
-from saper_web import Minesweeper
-from flask import Flask, render_template, redirect, request, jsonify, make_response, session, url_for
+
+from flask import Flask, render_template, redirect, request, jsonify, make_response, session, url_for, render_template_string
+from flask_login import LoginManager, login_user, logout_user, login_required, current_user
+from flask_session import Session
+
 from data import db_session
 from data.users import User
 from forms.user import LoginForm, RegisterForm
-from flask_login import LoginManager, login_user, logout_user, login_required, current_user
-from flask_session import Session
+
+from saper_web import Minesweeper
+from cat_catch import CatCatch
 
 app = Flask(__name__)
 app.config['PERMANENT_SESSION_LIFETIME'] = datetime.timedelta(
@@ -174,12 +178,42 @@ def interact_cell():
     return jsonify({'message': '',
                     'upd_field': render_template('mineField.html', field=field)})
 
-# Очистка сессии
-@app.route('/clear_game_session', methods=['POST'])
-def clear_game_session():
+
+#       ПОЙМАЙ КОТА
+@app.route('/catch_a_cat')
+def cat_catch():
+    if "catch_cat" in session:
+        game = session["catch_cat"]
+        return render_template('catch_cat.html', field=game.transformed_matrix, title='Поймай кота!')
+    session['catch_cat'] = CatCatch()
+    game = session['catch_cat']
+    return render_template('catch_cat.html', field=game.transformed_matrix, title='Поймай кота!')
+
+
+@app.route('/catch_a_cat/interact', methods=['POST'])
+def cat_interact_cell():
+    game = session['catch_cat']
     data = request.get_json()
-    session.pop(data['session'], None)
-    return 'success'
+
+    cords = list(map(int, (data['coords'].split(' '))))
+    game_response = game.interact(cords)
+    field = game_response['field']
+    for x in range(11):
+        add_class = ' move-lefter'
+        if x % 2 == 0:
+            add_class = ''
+        field[x] = f'<div class="row{add_class}">{''.join(field[x])}</div>'
+    field = ''.join(field)
+
+    # При выигрыше/проигрыше очищаются данные сессии
+    if game_response['status'] == 'win':
+        session.pop('catch_cat', None)
+        return jsonify({'field': field, 'status': 'win'})
+    
+    print(f'Try to fill in cell {cords}')
+    print(f'Move to cell {game.cat.cords}')
+    return jsonify({'field': field, 'status': game_response['status']})
+
 
 # Дальше всякая муть с логинами и регистрациями
 @login_manager.user_loader
@@ -230,6 +264,14 @@ def reqister():
         login_user(user, remember=True)
         return redirect('/')
     return render_template('register.html', title='Регистрация', form=form)
+
+
+# Обработчик очистки сессии для отдельной игры
+@app.route('/clear_game_session', methods=['POST'])
+def clear_game_session():
+    data = request.get_json()
+    session.pop(data['session'], None)
+    return 'success'
 
 
 @app.route('/logout')
