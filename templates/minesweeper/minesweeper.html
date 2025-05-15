@@ -1,7 +1,7 @@
 {% extends "mainfiles/base.html" %}
 {% block content %}
 <div class='game-container'>
-    <h1>Сапёр</h1>
+    <h2>Сапёр</h2>
     <div class='field' id="field">
         <!-- Вставка поля из отдельного файла -->
         {% include "minesweeper/mineField.html" %}
@@ -11,24 +11,24 @@
     <p id="debug" class="hidden"></p>
     <div id='buttons'> <!-- Генерация разных кнопок -->
         {% if start == True %} <!-- Генерация кнопок выбора сложности  -->
-        <a class="choose_btn btn btn-secondary" id="diffEasy"
+        <a class="choose_btn button btn-gray" id="diffEasy"
             href="javascript:start_game('diffEasy', '/minesweeper/start');">Лёгкий</a>
-        <a class="choose_btn btn btn-secondary" id="diffMed"
+        <a class="choose_btn button btn-gray" id="diffMed"
             href="javascript:start_game('diffMed', '/minesweeper/start');">Средний</a>
-        <a class="choose_btn btn btn-secondary" id="diffHard"
+        <a class="choose_btn button btn-gray" id="diffHard"
             href="javascript:start_game('diffHard', '/minesweeper/start');">Сложный</a>
         {% else %} <!-- Генерация кнопок выбора действия  -->
-        <a class="choose_btn btn btn-secondary" id="open"
+        <a class="choose_btn button btn-info" id="open"
             href="javascript:interact_cell('open', '/minesweeper/interact', 'open');">Открыть</a>
-        <a class="choose_btn btn btn-secondary" id="flag"
+        <a class="choose_btn button btn-info" id="flag"
             href="javascript:interact_cell('flag', '/minesweeper/interact', 'flag');">Поставить флаг</a>
         {% endif %}
     </div>
     {% if not start %}
     <div id="retryButtons">
-        <a class="choose_btn btn btn-secondary" id="retry" href="javascript:clearGameSession('minesweeper')">Попробовать
+        <a class="button btn-gray" id="retry" href="javascript:clearGameSession('minesweeper')">Попробовать
             еще</a>
-        <a class="choose_btn btn btn-secondary" id="home" href="index">Вернуться</a>
+        <a class="button btn-gray" id="home" href="index">Вернуться</a>
     </div>
     {% endif %}
 </div>
@@ -106,6 +106,16 @@
             document.getElementById('message').innerText = data.message;
         }
     }
+    async function clearGameSession(sess) {
+            const response = await fetch('/clear_game_session', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json; charset=utf-8'},
+                    body: JSON.stringify({
+                        session: sess
+                    })
+                })
+            location.reload();
+        }
 </script>
 {% endblock %}
 

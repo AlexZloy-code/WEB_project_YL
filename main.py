@@ -197,6 +197,8 @@ def cat_interact_cell():
     data = request.get_json()
 
     cords = list(map(int, (data['coords'].split(' '))))
+    if cords == list(game.cat.cords):
+        cords = None
     game_response = game.interact(cords)
     field = game_response['field']
     for x in range(11):
@@ -207,9 +209,10 @@ def cat_interact_cell():
     field = ''.join(field)
 
     # При выигрыше/проигрыше очищаются данные сессии
-    if game_response['status'] == 'win':
+    if game_response['status'] == 'win' or game_response['status'] == 'lose':
         session.pop('catch_cat', None)
-        return jsonify({'field': field, 'status': 'win'})
+        print(f'You {game_response['status']}')
+        return jsonify({'field': field, 'status': game_response['status']})
     
     print(f'Try to fill in cell {cords}')
     print(f'Move to cell {game.cat.cords}')

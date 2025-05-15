@@ -25,8 +25,13 @@ class CatCatch():
         return matrix
 
     def interact(self, fill):
+        if not fill:
+            return {'status': 'error', 'field': deepcopy(self.transformed_matrix)}
         self.matrix[fill[0]][fill[1]] = 1
-        path = self.cat.find_cat_path(self.matrix)
+        path, is_lose = self.cat.find_cat_path(self.matrix)
+        if is_lose:
+            self.transformed_matrix = transform_matrix(self.matrix)
+            return {'status': 'lose', 'field': deepcopy(self.transformed_matrix)}
         if not path:
             self.transformed_matrix = transform_matrix(self.matrix)
             return {'status': 'win', 'field': deepcopy(self.transformed_matrix)}
@@ -51,9 +56,8 @@ class Cat():
         self.cords = [5, 5]
 
     def find_cat_path(self, matrix):      # эту дичь надо потом как то объянить, это что то типо волнового алгоритма
-        directions = [(-1, 0), (0, -1), (0, 1), (1, 0), (-1, 1), (1, 1)]
-        if self.cords[0] % 2 == 0:
-            directions = [(-1, 0), (0, -1), (0, 1), (1, 0), (1, -1), (-1, -1)]
+        directions1 = [(-1, 0), (0, -1), (0, 1), (1, 0), (-1, 1), (1, 1)]
+        directions2 = [(-1, 0), (0, -1), (0, 1), (1, 0), (1, -1), (-1, -1)]
         rows = len(matrix)
         cols = len(matrix[0])
         
@@ -68,15 +72,21 @@ class Cat():
         visited[self.cords[0]][self.cords[1]] = True
         
         found_exit = None
-        
+        is_lose = False
+        count = 0
         while queue:
             row, col = queue.pop(0)  # Берём первую клетку из очереди
-            
+            count += 1
             # Проверяем, не на краю ли мы
             if row == 0 or row == rows - 1 or col == 0 or col == cols - 1:
+                if count == 1:
+                    is_lose = True
                 found_exit = (row, col)
                 break
-            
+            if row % 2 == 0:
+                directions = directions2
+            else:
+                directions = directions1
             # Проверяем все направления
             for dr, dc in directions:
                 new_row, new_col = row + dr, col + dc
@@ -98,7 +108,7 @@ class Cat():
                     break
             path.reverse()  # Разворачиваем, чтобы получить путь от кота к краю
         
-        return path
+        return path, is_lose
                 
 
     
