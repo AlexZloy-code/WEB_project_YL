@@ -66,6 +66,10 @@ def make_guess():
     digits = session['b_a_c']['digits']
     difficulty = session['b_a_c']['difficulty']
     num = data['number']
+    if len(set(num)) != digits or num[0] == '0':
+        return render_template('b_a_c/b_a_c_game.html',
+                        history=session["b_a_c"]['attempts'],
+                        digits=session['b_a_c']['digits'])
     if difficulty == 'easy':
         cows, bows = 0, 0
         for i in range(digits):
