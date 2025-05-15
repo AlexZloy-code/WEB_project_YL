@@ -1,0 +1,72 @@
+{% extends "mainfiles/base.html" %}
+{% block content %}
+    <div class = 'game-container'>
+        <h2>Поймай кота!</h2>
+        <div class = 'field' id="field">
+            <!-- Генерация поля -->
+            {% for columns in field %}
+                {% set row_index = loop.index0 %}
+                    {% if loop.index % 2 == 0 %}
+                        <div class = 'row move-lefter'>                     <!-- Генерация поля -->
+                    {% else %}
+                        <div class = 'row'>  
+                    {% endif %}
+                            {% for cell in columns %}
+                                {{ cell | safe }}
+                            {% endfor %}
+                        </div>
+                {% endfor %}
+        </div>
+        <!-- Сообщение игроку -->
+        <h2 id="message"> {{ Message }} </h2>
+        <p id="debug" class="hidden"></p>
+        <div id="retryButtons">
+            <a class="button btn-gray" id="retry" href="javascript:clearGameSession('catch_cat')">Попробовать еще</a>
+            <a class="button btn-gray" id="home" href="index">Вернуться</a>
+        </div>
+    </div>
+    {% block scripts %}
+    <!-- Скрипты AJAX запросов для динамичной смены состояния поля и сайта -->
+    <script>
+        async function clearGameSession(sess) {
+            const response = await fetch('/clear_game_session', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json; charset=utf-8'},
+                    body: JSON.stringify({
+                        session: sess
+                    })
+                })
+            location.reload();
+        }
+    
+        // Функция для динамического закрытия клетки, передает на сервер id клетки которую пытались закрыть, получая обновленное поле
+        async function interact_cell(sourceElem) {
+            const response = await fetch('/catch_a_cat/interact', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json; charset=utf-8'},
+                body: JSON.stringify({
+                    coords: sourceElem
+                })
+            })
+            
+            const data = await response.json();
+
+            if (data['status'] == 'win' | data['status'] == 'lose') {
+                document.getElementById('field').innerHTML = data['field'];
+                document.querySelectorAll('a.cat-field-block').forEach(link => {
+                    link.removeAttribute('href');
+                });
+                if (data['status'] == 'win'){
+                    document.getElementById('message').innerText = 'Вы выиграли!';
+                }
+                else {
+                    document.getElementById('message').innerText = 'Вы проиграли!';
+                }
+            }
+            else {
+                document.getElementById('field').innerHTML = data['field'];
+            }
+        }
+    </script>
+{% endblock %}
+{% endblock %}

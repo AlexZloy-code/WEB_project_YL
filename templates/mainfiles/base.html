@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" href="static/css/style.css">
+    <link rel="stylesheet" href="static/css/navbar.css">
+    <link rel="stylesheet" href="static/css/back_ground.css">
+</head>
+
+<body>
+    <nav class="menu">
+        {% if current_user.is_authenticated %}
+        <div class="fisrt_part">
+            <a class="name_of_command" href="/logout">{{ current_user.name }} {{ current_user.surname }}</a>
+            <a class="rating" href="/rating">RATING</a>
+            <a class="games" href="/games">GAMES</a>
+            {% if current_user.name == '212121' %}
+            <a class="name_of_command" href="/admin">Админка</a>
+            {% endif %}
+        </div>
+        <div class="second_part"></div>
+        <div class="third_part"></div>
+        <div class="forth_part">
+            <a class="CTF" href="/">Главная</a>
+            <button id="themeToggle" class='themeToggle'>☽</button>
+        </div>
+        {% else %}
+        <div class="fisrt_part">
+            <a class="invite" href="/login">Войти</a>
+            <a class="invite" href="/register">Регистрация</a>
+            <a class="rating" href="/rating">RATING</a>
+            <a class="games" href="/games">GAMES</a>
+            {% if current_user.name == '212121' %}
+            <a class="name_of_command" href="/admin">Админка</a>
+            {% endif %}
+        </div>
+        <div class="second_part"></div>
+        <div class="third_part"></div>
+        <div class="forth_part">
+            <a class="CTF" href="/">Главная</a>
+            <button id="themeToggle" class='themeToggle'>☽</button>
+        </div>
+        {% endif %}
+    </nav>
+
+
+    <main role="main" class="container">
+        {% block content %}{% endblock %}
+    </main>
+    <script>
+        let flag = 0
+        setInterval(function () {
+            if (window.innerWidth <= 1200 || window.innerWidth >= 2400) {
+                document.body.innerHTML = '<div style="user-select: none;width: 90vw;height: 85vh;margin: 5% 0px 0px 5%;border: 1px solid #ffffff22;background-color: #282c34;background: linear-gradient(0deg, rgba(40,44,52,1) 0%, rgba(17,0,32,.5) 100%);box-shadow: 0 7px 20px 5px #00000088;border-radius: .7rem;backdrop-filter: blur(7px);overflow: hidden;font-size: 7vw;">Просмотр при данном маштабировании не поддерживается</div>';
+                flag = 1
+            }
+            else {
+                if (flag === 1) {
+                    document.body.innerHTML = '<meta http-equiv="refresh" content="0">';
+                    flag = 0
+                }
+            }
+        }, 10);
+    </script>
+    <script>
+        document.getElementById('themeToggle').addEventListener('click', function () {
+            const currentTheme = document.body.className;
+            if (currentTheme === 'light-theme') {
+                document.body.className = 'dark-theme';
+                document.getElementById("themeToggle").innerHTML = '☽'
+            } else {
+                document.body.className = 'light-theme';
+                document.getElementById("themeToggle").innerHTML = '☀'
+            }
+        });
+    </script>
+    </script>
+</body>
+
+</html>
