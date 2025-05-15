@@ -1,0 +1,112 @@
+{% extends "mainfiles/base.html" %}
+{% block content %}
+<div class='game-container'>
+    <h1>Сапёр</h1>
+    <div class='field' id="field">
+        <!-- Вставка поля из отдельного файла -->
+        {% include "minesweeper/mineField.html" %}
+    </div>
+    <!-- Сообщение игроку -->
+    <h2 id="message"> {{ Message }} </h2>
+    <p id="debug" class="hidden"></p>
+    <div id='buttons'> <!-- Генерация разных кнопок -->
+        {% if start == True %} <!-- Генерация кнопок выбора сложности  -->
+        <a class="choose_btn btn btn-secondary" id="diffEasy"
+            href="javascript:start_game('diffEasy', '/minesweeper/start');">Лёгкий</a>
+        <a class="choose_btn btn btn-secondary" id="diffMed"
+            href="javascript:start_game('diffMed', '/minesweeper/start');">Средний</a>
+        <a class="choose_btn btn btn-secondary" id="diffHard"
+            href="javascript:start_game('diffHard', '/minesweeper/start');">Сложный</a>
+        {% else %} <!-- Генерация кнопок выбора действия  -->
+        <a class="choose_btn btn btn-secondary" id="open"
+            href="javascript:interact_cell('open', '/minesweeper/interact', 'open');">Открыть</a>
+        <a class="choose_btn btn btn-secondary" id="flag"
+            href="javascript:interact_cell('flag', '/minesweeper/interact', 'flag');">Поставить флаг</a>
+        {% endif %}
+    </div>
+    {% if not start %}
+    <div id="retryButtons">
+        <a class="choose_btn btn btn-secondary" id="retry" href="javascript:clearGameSession('minesweeper')">Попробовать
+            еще</a>
+        <a class="choose_btn btn btn-secondary" id="home" href="index">Вернуться</a>
+    </div>
+    {% endif %}
+</div>
+</div>
+<!-- Скрипты AJAX запросов для динамичной смены состояния поля и сайта -->
+{% block scripts %}
+<script>
+    async function start_game(sourceElem, diff) {
+        const response = await fetch(diff, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json; charset=utf-8' },
+            body: JSON.stringify({
+                field: document.getElementById(sourceElem).id
+            })
+        })
+        const data = await response.json();
+        document.body.innerHTML = data.field;
+    }
+    // Функция для динамического отображения выделенной клетки, возвращает id в матрице и добавляет нужный класс
+    async function select_cell(sourceElem) {
+        cell_id = document.getElementById(sourceElem).id.slice(5);
+
+        // Снимаю класс selected с других лишних частей поля
+        const selected_elems = document.querySelectorAll('.selected');
+        document.querySelectorAll('.selected').forEach(el => el.classList.remove('selected'));
+        const response = await fetch('/minesweeper/select-cell', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json; charset=utf-8' },
+            body: JSON.stringify({
+                id_cell: cell_id
+            })
+        })
+        const data = await response.json();
+        document.getElementById(sourceElem).classList.add('selected');
+        document.getElementById('debug').innerText = data.id_cell;
+        if (data.cell_type == 'flaged') {
+            document.getElementById('buttons').classList.remove('hidden');
+            document.getElementById('flag').innerText = 'Убрать флаг';
+        }
+        else if (data.cell_type != 'opened') {
+            document.getElementById('flag').innerText = 'Поставить флаг';
+            document.getElementById('buttons').classList.remove('hidden');
+        }
+        else {
+            document.getElementById('buttons').classList.add('hidden');
+        }
+    }
+    // Функция для динамического открытия клетки, передает на сервер id клетки которую пытались открыть, получая обновленное поле
+    async function interact_cell(sourceElem, using, type) {
+        const response = await fetch(using, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json; charset=utf-8' },
+            body: JSON.stringify({
+                interact_type: type
+            })
+        })
+
+
+        const data = await response.json();
+
+        // Временная заглушка, планируется добавление обработки записи рекорда на аккаунт, пока только выход
+        if (data.message.startsWith('Вы ')) {
+            document.getElementById('field').innerHTML = data.upd_field;
+            document.getElementById('buttons').classList.add('hidden');
+            document.querySelectorAll('a.field_block').forEach(link => {
+                link.removeAttribute('href');
+            });
+            document.getElementById('message').innerText = data.message;
+        }
+
+        else {
+            document.querySelectorAll('.selected').forEach(el => el.classList.remove('selected'));
+            document.getElementById('field').innerHTML = data.upd_field;
+            document.getElementById('buttons').classList.add('hidden');
+            document.getElementById('message').innerText = data.message;
+        }
+    }
+</script>
+{% endblock %}
+
+{% endblock %}

@@ -1,0 +1,39 @@
+{% extends "mainfiles/base.html" %}
+
+{% block content %}
+
+<head>
+    <link rel="stylesheet" href="/static/css/tasks.css">
+</head>
+{% if not current_user.is_authenticated %}
+<a class="un_authenticated"> Вы не вошли в систему</a>
+{% else %}
+<a class="tasks_text">Games</a>
+{% endif %}
+
+
+<div>
+    <div class="Task" onclick="window.location.href = '/minesweeper'">
+        <div class='main'>
+            <img class='taskImage' src="static/img/saper.jpg" alt="Логотип Сапёра не нашёлся(">
+            <h2>Сапёр</h2>
+            <div class="taskInfo">
+            </div>
+            <hr>
+            <div class='creator'>
+                <p><ins>...</ins> Не знаю что здесь написать</p>
+            </div>
+        </div>
+    </div>
+    <div class="Task" onclick="window.location.href = '/bulls_and_cows'">
+        <div class='main'>
+            <img class='taskImage' src="static/img/saper.jpg" alt="Логотип игры быки и коры не нашёлся(">
+            <h2>Быки и коровы</h2>
+            <hr>
+            <div class='creator'>
+                <p><ins>...</ins> Не знаю что здесь написать</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

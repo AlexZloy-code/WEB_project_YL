@@ -1,0 +1,96 @@
+body {
+  font-family: Arial, sans-serif;
+  --bg_color: #373535;
+  --text_color: #ffffff;
+  --invite_bg_color: #00000020;
+  --flag_bg_color: #858a93;
+}
+
+body.light-theme {
+  --bg_color: #ffffff;
+  --text_color: #000000;
+  --invite_bg_color: #d2d2d2;
+  --flag_bg_color: #ffffff;
+}
+
+body.dark-theme {
+  --bg_color: #373535;
+  --text_color: #ffffff;
+  --invite_bg_color: #00000020;
+  --flag_bg_color: #858a93;
+}
+
+.menu {
+  z-index: 1;
+  position: flex;
+  height: 55px;
+  width: 100%;
+  background: var(--bg_color);
+  display: flex;
+  align-items: center;
+  font-size: 1.25rem;
+  cursor: pointer;
+}
+
+.invite {
+  position: flex;
+  font-size: 25px;
+  margin-left: 10px;
+  padding: 0.5%;
+  color: var(--text_color);
+  background-color: var(--invite_bg_color);
+}
+
+.fisrt_part {
+  width: 45.5%;
+  margin: 0 0.5%;
+}
+
+.name_of_command {
+  position: flex;
+  font-size: 25px;
+  margin-left: 10px;
+  padding: 1%;
+  height: 10%;
+  color: var(--text_color);
+  background-color: var(--invite_bg_color);
+}
+
+.rating {
+  position: flex;
+  margin-left: 20px;
+  color: var(--text_color);
+}
+
+.games {
+  position: flex;
+  margin-left: 20px;
+  color: var(--text_color);
+}
+
+.second_part {
+  width: 10%;
+}
+
+
+.third_part {
+  width: 30%
+}
+
+.forth_part {
+  width: 14%
+}
+
+.CTF {
+  position: flex;
+  width: 10%;
+  margin-left: 25%;
+  height: 5%;
+  color: var(--text_color);
+}
+
+.themeToggle {
+  position: flex;
+  width: 20%;
+  margin-left: 15%;
+}
