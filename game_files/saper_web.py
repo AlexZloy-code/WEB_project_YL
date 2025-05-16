@@ -37,6 +37,7 @@ class Minesweeper():
         self.mas_of_mins = []
         self.selected_cell_id = []
         self.count_close = 1
+        self.difficulty = difficulty
 
     def create_matrix(self, difficulty):
         if difficulty == 'diffEasy':
@@ -71,7 +72,7 @@ class Minesweeper():
                 self.count_close += 1
             if self.mas_of_mins and self.is_victory():  # Обработка победы, если все клетки закрыты
                 self.show_min_on_matrix()
-                return 'Вы выиграли!'
+                return ('Вы выиграли!', self.difficulty)
         self.transformed_matrix = transform_matrix(self.matrix)
         return
 

@@ -1,6 +1,7 @@
 import datetime
 import random as r
 from waitress import serve
+import os
 
 from game_files.saper_web import Minesweeper
 from game_files.cat_catch import CatCatch
@@ -11,6 +12,7 @@ from flask import Flask, Blueprint
 from flask import render_template, redirect,  jsonify, url_for, abort
 from flask import request, session
 
+from flask_login import current_user
 from flask_login import LoginManager
 from flask_login import login_user, logout_user, login_required
 
@@ -27,7 +29,7 @@ from data.users_api import users_api
 
 
 blueprint = Blueprint(
-    'jobs_api',
+    'users_api',
     __name__,
     template_folder='templates'
 )
@@ -81,6 +83,8 @@ def make_guess():
             session["b_a_c"]['attempts'].remove([num, cows, bows])
         session["b_a_c"]['attempts'].append([num, cows, bows])
         if bows == digits:
+            if current_user.is_authenticated:
+                pass
             print('win')
             session.pop('b_a_c', None)
             return jsonify({'html': '<h3>Вы выиграли!</h3>', 'status': 'win'})
@@ -95,6 +99,8 @@ def make_guess():
             session["b_a_c"]['attempts'].remove([num, cows, bows])
         session["b_a_c"]['attempts'].append([num, cows, bows])
         if bows == digits:
+            if current_user.is_authenticated:
+                pass
             print('win')
             session.pop('b_a_c', None)
             return jsonify({'html': '<h3>Вы выиграли!</h3>', 'status': 'win'})
@@ -149,6 +155,8 @@ def bulls_and_cows():
         }
         session.modified = True
 
+        print(proba)
+
         return redirect(url_for('bulls_and_cows'))
     
     return render_template('b_a_c/b_a_c_menu.html')
@@ -187,6 +195,9 @@ def select_cell():
 @app.route('/minesweeper/interact', methods=['POST'])
 def interact_cell():
     game = session['minesweeper']
+    if not game.selected_cell_id:
+        return jsonify({'message': '',
+                        'upd_field': render_template('minesweeper/mineField.html', field=game.transformed_matrix)})
     y, x = game.selected_cell_id
     data = request.get_json()
     msg = game.interactive(data['interact_type'], [x, y])
@@ -195,6 +206,10 @@ def interact_cell():
     # При выигрыше/проигрыше очищаются данные сессии
     if msg:
         print(msg)
+        if msg[0] == 'Вы выиграли!':
+            if current_user.is_authenticated:
+                pass
+                
         session.pop('minesweeper', None)
         return jsonify({'message': msg,
                         'upd_field': render_template('minesweeper/mineField.html', field=field)})
@@ -260,6 +275,19 @@ def games():
 @app.route('/rating')
 def rating():
     abort(403)
+
+#Загрузка фоток, просто прилепил
+@app.route('/load_photo', methods=['POST', 'GET'])
+def load_photo():
+    if request.method == 'GET':
+        if os.path.exists('static/image/image_of_people.png'):
+            return render_template('main4.html', img='static/image/image_of_people.png')
+        return render_template('main4.html', img='static/image/base_image.png')
+    elif request.method == 'POST':
+        f = request.files['file']
+        with open('static/image/image_of_people.png', 'wb') as file:
+            file.write(f.read())
+        return "Форма отправлена"
 
 
 # Дальше всякая муть с логинами и регистрациями

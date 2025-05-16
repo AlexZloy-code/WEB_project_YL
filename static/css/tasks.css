@@ -42,9 +42,8 @@ hr {
 
 .taskImage {
   border-radius: .5rem;
-  width: 320px;
-  height: 320px;
-  object-fit: cover;
+  width: 16vw;
+  height: 16vw;
 }
 
 .taskInfo {
